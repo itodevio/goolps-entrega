@@ -1,0 +1,32 @@
+Italo Assunção Aguiar - 31928900
+Felipe Augusto Alves Retondar - 31617212 
+Roberto Tsuneki Sa Freire - 31946968 
+Rafael Lucas Alencar - 31986773
+
+* Presume-se que as ferramentas git e kubectl já estão instaladas e configuradas, bem como um projeto na nuvem com um cluster kubernetes
+** Nesse passo-a-passo será usado o GCP, nuvem da google
+
+1 - Criar imagens 
+	- Execute o comando `docker build -f Dockerfile_backend_dockerhub -t backend .`
+	- Execute o comando `docker build -f Dockerfile_frontend_dockerhub -t frontend .`
+
+2 - Suba os containers para seu registrador de containers (gcr neste caso):
+	- Execute o comando `docker tag backend gcr.io/<project_id>/backend:latest`
+	- Execute o comando `docker tag frontend gcr.io/<project_id>/frontend:latest`
+	- Execute o comando `docker push gcr.io/<project_id>/backend:latest`
+	- Execute o comando `docker push gcr.io/<project_id>/frontend:latest`
+
+3 - Crie os pods do MongoDB, Backend e Frontend:
+	- Execute o comando `kubectl apply -f mongo.yaml`
+	- Execute o comando `kubectl apply -f backend.yaml`
+	- Execute o comando `kubectl apply -f frontend.yaml`
+
+4 - Atualizar as variáveis de ambiente
+	- Execute o comando `kubectl get svc` e anote o IP externo de cada serviço
+	- Modifique o arquivo 'Dockerfile_backend_dockerhub' e adicione uma variavel de ambiente:
+		- ENV MONGOOSE_URI=mongodb://goolps:goolps@<IP_EXTERNO_DO_SERVICO_DO_MONGODB>:27017
+	- Modifique o arquivo 'Dockerfile_frontend_dockerhub' e adicione uma variavel de ambeinte:
+		- ENV NEXT_PUBLIC_API_URL=http://<IP_EXTERNO_DO_SERVICO_DO_BACKEND>:8080/v1
+	- Repita os passos 1 a 3 para atualizar os serviços com as novas variaveis de ambiente
+
+5 - Basta acessar o IP externo do serviço do frontend no navegador e vai estar funcionando!
